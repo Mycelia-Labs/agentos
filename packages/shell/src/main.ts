@@ -35,16 +35,15 @@ import gawk from "@agentos-software/gawk";
 import git from "@agentos-software/git";
 import grep from "@agentos-software/grep";
 import gzip from "@agentos-software/gzip";
-import httpGet from "@agentos-software/http-get";
 import jq from "@agentos-software/jq";
 import ripgrep from "@agentos-software/ripgrep";
 import sed from "@agentos-software/sed";
 import sqlite3 from "@agentos-software/sqlite3";
 import vim from "@agentos-software/vim";
-import vix from "@agentos-software/vix";
 import tar from "@agentos-software/tar";
 import tree from "@agentos-software/tree";
 import unzip from "@agentos-software/unzip";
+import wget from "@agentos-software/wget";
 import yq from "@agentos-software/yq";
 import zip from "@agentos-software/zip";
 import type { MountConfig, SoftwareInput } from "@rivet-dev/agentos-core";
@@ -58,7 +57,7 @@ const workspaceRoot = resolve(__dirname, "../../..");
 const fallbackCommandDirs = [
 	resolve(
 		workspaceRoot,
-		"registry/native/target/wasm32-wasip1/release/commands",
+		"toolchain/target/wasm32-wasip1/release/commands",
 	),
 ];
 const BRUSH_SHELL_COMMANDS = new Set(["bash", "sh"]);
@@ -153,18 +152,18 @@ const software: SoftwareInput[] = [
 	yq,
 	codex,
 	git,
-	httpGet,
 	sqlite3,
+	wget,
 ]
 	.map(withLocalCommandFallback)
 	.filter((input): input is SoftwareInput => input !== null);
 
-// The vi-like editors ship as registry packages: vix, and vim (which carries
-// its runtime tree + VIMRUNTIME via the manifest `provides`). An unbuilt
-// package is a valid empty placeholder — skip it rather than projecting a
-// command-less package (build them locally: drop the wasm binaries into
-// registry/native/target/.../commands and run `just registry-build`).
-for (const editor of [vix, vim] as RegistryPackage[]) {
+// vim ships as a software package (which carries its runtime tree + VIMRUNTIME
+// via the manifest `provides`). An unbuilt package is a valid empty placeholder
+// — skip it rather than projecting a command-less package (build it locally:
+// drop the wasm binary into toolchain/target/.../commands and run
+// `just software-build`).
+for (const editor of [vim] as RegistryPackage[]) {
 	if (isUsablePackageFile(editor.packagePath)) {
 		software.push({ packagePath: editor.packagePath });
 		continue;

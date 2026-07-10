@@ -13,6 +13,7 @@ import {
 	unlinkSync,
 	writeFileSync,
 } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, resolve, sep } from "node:path";
 
 /**
@@ -93,7 +94,7 @@ function stripEscapingSymlinks(root: string): string[] {
 					// A hoisted deploy has no `.pnpm` store-escape symlinks, so an
 					// escaping link here is a workspace `link:` dep pnpm didn't copy
 					// — e.g. an agent package that now lives in the sibling
-					// secure-exec repo (registry/agent/*). Materialize a dereferenced
+					// secure-exec repo (software/*). Materialize a dereferenced
 					// copy so it's still present in the flat tree the VM mounts; a
 					// published install would have it as a real dir. Dangling or
 					// non-package escapes are dropped as before.
@@ -129,12 +130,11 @@ export function ensureFlatNodeModules(cwd: string): string {
 
 	const repoRoot = findRepoRoot(cwd);
 	const safe = packageName.replace(/[^a-z0-9]+/gi, "_");
-	const cacheRoot = join(
-		repoRoot,
-		"node_modules",
-		".cache",
-		"agentos-flat-fixtures",
-	);
+	const repoSafe = repoRoot.replace(/[^a-z0-9]+/gi, "_");
+	const cacheBase =
+		process.env.AGENTOS_FLAT_FIXTURE_CACHE_ROOT ??
+		join(tmpdir(), "agentos-flat-fixtures");
+	const cacheRoot = join(cacheBase, repoSafe);
 	mkdirSync(cacheRoot, { recursive: true });
 	const target = join(cacheRoot, safe);
 	const readyMarker = join(target, ".ready");

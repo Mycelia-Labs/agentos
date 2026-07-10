@@ -8,6 +8,7 @@ description = "V8 isolate runtime for secure-exec guest JavaScript execution"
 
 [dependencies]
 agentos-bridge = { workspace = true }
+agentos-node-stdlib = { workspace = true }
 v8 = "130"
 crossbeam-channel = "0.5"
 signal-hook = "0.3"
@@ -18,3 +19,6 @@ sha2 = "0.10"
 
 [build-dependencies]
 agentos-build-support = { workspace = true }
+
+[dev-dependencies]
+serde_json = "1.0"

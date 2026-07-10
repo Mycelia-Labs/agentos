@@ -35,6 +35,8 @@ export const EXCLUDED = new Set<string>([
 	"@rivet-dev/agentos-workspace",
 	"@rivet-dev/agentos-dev-shell",
 	"@rivet-dev/agentos-playground",
+	"@rivet-dev/agentos-browser",
+	"@rivet-dev/agentos-runtime-browser",
 	"@rivet-dev/agentos-shell",
 	"secure-exec",
 	"publish",
@@ -161,7 +163,7 @@ export function discoverPackages(
 		}
 	}
 
-	// 2. pnpm workspace packages. Skip the registry/software/* WASM command
+	// 2. pnpm workspace packages. Skip the software/* WASM command
 	//    packages. They are built and shipped separately, never published to npm
 	//    from this flow.
 	const pnpmList = execSync("pnpm -r list --json --depth -1", {
@@ -183,11 +185,11 @@ export function discoverPackages(
 		) {
 			continue;
 		}
-		// registry/software packages version independently and publish from
+		// software packages version independently and publish from
 		// local via the toolchain — EXCEPT `common`, which core hard-depends on
 		// and therefore ships on the main release track in lockstep.
 		if (
-			p.path.includes("/registry/software/") &&
+			p.path.includes("/software/") &&
 			p.name !== "@agentos-software/common"
 		) {
 			continue;

@@ -1563,8 +1563,13 @@ impl VirtualFileSystem for OverlayFileSystem {
         if self.is_whited_out(path) {
             return Err(Self::entry_not_found(path));
         }
-        let lower_exists = self.find_lower_by_exists(path).is_some();
-        let upper_exists = self.exists_in_upper(path);
+        // POSIX unlink(2) removes the directory entry itself and never follows
+        // a symlink leaf, so existence must be checked with lstat semantics.
+        // `exists()` resolves symlinks, which made dangling symlinks (for
+        // example git's `.git/tXXXXXX` symlink-support probe) unremovable:
+        // the entry stayed listed by readdir while unlink reported ENOENT.
+        let lower_exists = self.find_lower_by_entry(path).is_some();
+        let upper_exists = self.has_entry_in_upper(path);
         if !lower_exists && !upper_exists {
             return Err(Self::entry_not_found(path));
         }
@@ -1661,6 +1666,8 @@ impl VirtualFileSystem for OverlayFileSystem {
         let mut snapshot_entries = Vec::new();
         self.collect_snapshot_entries(&old_normalized, &mut snapshot_entries)?;
 
+        self.clear_path_metadata(&resolved_new_normalized)?;
+        self.clear_subtree_metadata(&resolved_new_normalized)?;
         if let Ok(destination_stat) = self.merged_lstat(&resolved_new_normalized) {
             if destination_stat.is_directory
                 && !destination_stat.is_symbolic_link
@@ -1678,7 +1685,6 @@ impl VirtualFileSystem for OverlayFileSystem {
                         .remove_file(&resolved_new_normalized)?;
                 }
             }
-            self.clear_subtree_metadata(&resolved_new_normalized)?;
         }
 
         self.stage_snapshot_entries_in_upper(&snapshot_entries)?;
@@ -1983,6 +1989,84 @@ mod tests {
 
         assert!(!overlay.exists("/a"));
         assert_error_code(overlay.read_dir("/a"), "ENOENT");
+    }
+
+    #[test]
+    fn rename_clears_destination_whiteout() {
+        let lower = MemoryFileSystem::new();
+        let mut overlay = OverlayFileSystem::new(vec![lower], OverlayMode::Ephemeral);
+        overlay
+            .write_file("/archive.zip", b"old".to_vec())
+            .expect("create old archive");
+        overlay
+            .remove_file("/archive.zip")
+            .expect("whiteout old archive");
+        overlay
+            .write_file("/workspace-temp", b"new".to_vec())
+            .expect("create replacement");
+
+        overlay
+            .rename("/workspace-temp", "/archive.zip")
+            .expect("rename replacement over whiteout");
+
+        assert_eq!(
+            overlay
+                .read_file("/archive.zip")
+                .expect("read renamed file"),
+            b"new"
+        );
+        assert!(!overlay.exists("/workspace-temp"));
+    }
+
+    #[test]
+    fn remove_file_unlinks_dangling_symlink() {
+        // git's symlink-support probe creates `.git/tXXXXXX -> testing` (a
+        // dangling symlink), lstats it, and unlinks it. unlink(2) must remove
+        // the link itself without resolving it.
+        let lower = MemoryFileSystem::new();
+        let mut overlay = OverlayFileSystem::new(vec![lower], OverlayMode::Ephemeral);
+        overlay.mkdir("/repo", true).expect("create directory");
+        overlay
+            .symlink("testing", "/repo/probe")
+            .expect("create dangling symlink");
+        assert!(
+            overlay
+                .lstat("/repo/probe")
+                .expect("lstat dangling symlink")
+                .is_symbolic_link
+        );
+
+        overlay
+            .remove_file("/repo/probe")
+            .expect("unlink dangling symlink");
+
+        assert!(overlay.lstat("/repo/probe").is_err());
+        assert_eq!(
+            overlay.read_dir("/repo").expect("read emptied directory"),
+            Vec::<String>::new()
+        );
+        overlay
+            .remove_dir("/repo")
+            .expect("rmdir emptied directory");
+    }
+
+    #[test]
+    fn remove_file_unlinks_dangling_symlink_from_lower_layer() {
+        let mut lower = MemoryFileSystem::new();
+        lower.mkdir("/repo", true).expect("create lower directory");
+        lower
+            .symlink("missing-target", "/repo/probe")
+            .expect("seed lower dangling symlink");
+
+        let mut overlay = OverlayFileSystem::new(vec![lower], OverlayMode::Ephemeral);
+        overlay
+            .remove_file("/repo/probe")
+            .expect("whiteout lower dangling symlink");
+
+        assert!(overlay.lstat("/repo/probe").is_err());
+        overlay
+            .remove_dir("/repo")
+            .expect("rmdir merged-empty directory");
     }
 
     #[test]

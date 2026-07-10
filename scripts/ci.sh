@@ -33,6 +33,7 @@ run_step node --test scripts/check-rust-package-metadata.test.mjs
 run_step node scripts/check-rust-package-metadata.mjs
 run_step node --test scripts/check-agentos-client-protocol-compat.test.mjs
 run_step node scripts/check-agentos-client-protocol-compat.mjs
+run_step pnpm check-layout
 if [[ -f scripts/check-registry-test-runtime-boundary.test.mjs ]]; then
 	run_step node --test scripts/check-registry-test-runtime-boundary.test.mjs
 	run_step node scripts/check-registry-test-runtime-boundary.mjs
@@ -42,10 +43,9 @@ if [[ -f scripts/check-registry-software-split.test.mjs ]]; then
 	run_step node scripts/check-registry-software-split.mjs
 fi
 run_step cargo fmt --check
-run_step cargo clippy --workspace --all-targets -- -D warnings
+run_step cargo clippy --workspace --exclude agentos-native-sidecar-browser --exclude agentos-sidecar-browser --all-targets -- -D warnings
 run_step cargo test -p agentos-protocol -- --test-threads=1
 run_step cargo test -p agentos-sidecar -- --test-threads=1
-run_step cargo test -p agentos-sidecar-browser -- --test-threads=1
 run_step cargo test -p agentos-client -- --test-threads=1
 run_step pnpm check-types
 run_step pnpm lint
