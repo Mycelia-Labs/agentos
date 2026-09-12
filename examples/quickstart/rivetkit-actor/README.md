@@ -38,4 +38,4 @@ The first run prints `Visit count: 1`; the second prints `Visit count: 2` becaus
 
 ## Source
 
-View the source on GitHub: https://github.com/rivet-dev/agent-os/tree/main/examples/quickstart/rivetkit-actor
+View the source on GitHub: https://github.com/Mycelia-Labs/agentos/tree/feat/add-rivetkit-actor-example/examples/quickstart/rivetkit-actor
