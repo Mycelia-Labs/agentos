@@ -15,18 +15,23 @@ The VM starts with an in-memory filesystem; the state lasts as long as the actor
 
 ## Run it
 
+From the repository root, install the workspace dependencies:
+
+```sh
+pnpm install
+```
+
 Start the server in one terminal:
 
 ```sh
-npm install
-npm run server
+pnpm --dir examples/quickstart/rivetkit-actor run server
 ```
 
 Run the client in another terminal, then run it again:
 
 ```sh
-npm run client
-npm run client
+pnpm --dir examples/quickstart/rivetkit-actor run client
+pnpm --dir examples/quickstart/rivetkit-actor run client
 ```
 
 The first run prints `Visit count: 1`; the second prints `Visit count: 2` because both requests address the `persistent-demo` actor.
