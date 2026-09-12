@@ -23,6 +23,18 @@ npx tsx client.ts                            # trigger the durable bug-fix workf
 
 The client sends a request to the workflow queue; the workflow drives the VM through each step and prints the last issue and test exit code.
 
+## Quality gate
+
+`quality-gate-server.ts` shows how to turn an agent's review into a durable decision. The workflow keeps the expensive review in its own step, passes the findings to a deterministic quality gate, and records the result in actor state. If the process restarts after the review, replay can reuse the completed step instead of asking the agent to review the file again.
+
+```bash
+npm install
+ANTHROPIC_API_KEY=sk-... npx tsx quality-gate-server.ts   # start the workflow + VM
+npx tsx quality-gate-client.ts /home/agentos/project/src/index.ts
+```
+
+The file must already be available in the VM. The review should begin with `PASS:` for a clean result or `BLOCKER:` / `CRITICAL:` for a blocking issue; the workflow routes the latter to `needs-work`.
+
 ## Source
 
 View the source on GitHub: https://github.com/rivet-dev/agent-os/tree/main/examples/workflows
