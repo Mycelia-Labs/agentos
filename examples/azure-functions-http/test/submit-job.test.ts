@@ -1,36 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type {
-  HttpRequest as HttpRequestType,
-  InvocationContext,
-} from "@azure/functions";
+import azureFunctions from "@azure/functions";
+import type { InvocationContext } from "@azure/functions";
 import { submitJob } from "../src/functions/submit-job-handler.js";
 import { submitJobOptions } from "../src/functions/submit-job-registration.js";
 
 const context = {} as InvocationContext;
 const requestId = "550e8400-e29b-41d4-a716-446655440000";
 
+const { HttpRequest, HttpResponse } = azureFunctions;
 type ResponseBody = Record<string, unknown>;
-type RequestInit = {
-  method: string;
-  url: string;
-  headers: Record<string, string>;
-  body: { string: string };
-};
-type SdkHttpRequest = new (init: RequestInit) => HttpRequestType;
-type SdkHttpResponse = new (init: Awaited<ReturnType<typeof submitJob>>) => {
-  status: number;
-  json(): Promise<unknown>;
-};
-
-// The SDK documents these constructors for testing, but v4.16.5 does not expose them from its package entrypoint.
-const httpRequestModulePath = "@azure/functions/src/http/HttpRequest.ts";
-const httpResponseModulePath = "@azure/functions/src/http/HttpResponse.ts";
-const [{ HttpRequest }, { HttpResponse }] = await Promise.all([
-  import(httpRequestModulePath) as Promise<{ HttpRequest: SdkHttpRequest }>,
-  import(httpResponseModulePath) as Promise<{ HttpResponse: SdkHttpResponse }>,
-]);
-
 function requestFromJson(json: string) {
   return new HttpRequest({
     method: "POST",
