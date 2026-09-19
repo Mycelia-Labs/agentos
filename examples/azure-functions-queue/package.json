@@ -1,0 +1,22 @@
+{
+  "name": "@rivet-dev/agentos-example-azure-functions-queue",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A small Azure Functions v4 Storage Queue trigger with Zod validation.",
+  "type": "module",
+  "main": "dist/src/functions/*.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.11.0",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
