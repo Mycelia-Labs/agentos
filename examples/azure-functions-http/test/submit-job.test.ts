@@ -103,17 +103,17 @@ test("accepts all three priorities", async () => {
   }
 });
 
-test("accepts a task of exactly 4000 characters", async () => {
-  const task = "x".repeat(4000);
+test("accepts a task of exactly 2000 characters", async () => {
+  const task = "x".repeat(2000);
   const response = await responseFrom(await submitJob(requestFrom({ requestId, task }), context));
 
   assert.equal(response.status, 200);
   assert.equal(((await response.json()) as ResponseBody).task, task);
 });
 
-test("rejects a task of 4001 characters", async () => {
+test("rejects a task of 2001 characters", async () => {
   const response = await responseFrom(
-    await submitJob(requestFrom({ requestId, task: "x".repeat(4001) }), context),
+    await submitJob(requestFrom({ requestId, task: "x".repeat(2001) }), context),
   );
 
   assert.equal(response.status, 400);

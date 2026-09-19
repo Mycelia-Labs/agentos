@@ -31,7 +31,7 @@ A valid request returns `200` with `status: "validated"` and `scheduled: false`.
 The accepted payload has exactly these fields:
 
 - `requestId`: UUID
-- `task`: trimmed string, 1–4000 characters after trimming
+- `task`: trimmed string, 1–2000 characters after trimming
 - `priority`: `low`, `normal`, or `high`; defaults to `normal`
 
 Unknown fields and invalid JSON are rejected with `400`.
